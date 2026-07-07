@@ -1676,20 +1676,21 @@
                     btnReset.style.cursor = "not-allowed";
                 } else {
                     btnReset.onclick = () => {
-                        showCustomDialog("Konfirmasi Reset Ujian", `Apakah Anda yakin ingin mereset ujian ${peserta.nama}? Riwayat skor sebelumnya dan status pengerjaan saat ini akan dihapus sepenuhnya.`, true, () => {
-                            // Hapus dari riwayat pengerjaan masuk
-                            hasilUjianDiterima = hasilUjianDiterima.filter(h => h.nik !== peserta.nik);
-                            // Hapus sesi login aktif
-                            delete activeSessions[peserta.nik];
-                            // Reset state lokal pengerjaan jika peserta itu sendiri yang sedang aktif di browser saat ini
-                            if (dataSiswa.nik === peserta.nik) {
-                                jawabanUser = {};
-                                indeksSekarang = 0;
-                                jumlahPelanggaran = 0;
+                        showCustomDialog("Konfirmasi Reset Ujian", `Apakah Anda yakin ingin mereset ujian ${peserta.nama}?`, true, async () => {
+                            // Panggil Backend untuk hapus di Sheet
+                            try {
+                                await fetch(API_URL, {
+                                    method: 'POST',
+                                    body: JSON.stringify({ action: 'reset_user', nik: peserta.nik })
+                                });
+                                // Update Lokal
+                                hasilUjianDiterima = hasilUjianDiterima.filter(h => h.nik !== peserta.nik);
+                                delete activeSessions[peserta.nik];
+                                renderTableUser();
+                                renderTableNilai();
+                            } catch(err) {
+                                console.error("Gagal mereset:", err);
                             }
-                            renderTableUser();
-                            renderTableNilai();
-                            perbaruiTampilanStatistikAdmin();
                         });
                     };
                 }
